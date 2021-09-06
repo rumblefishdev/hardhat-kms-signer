@@ -5,8 +5,8 @@
   "repository": "github:rumblefishdev/hardhat-kms-signer",
   "author": "Rumblefish Software Development",
   "license": "MIT",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "keywords": [
     "ethereum",
     "smart-contracts",
@@ -21,7 +21,7 @@
     "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist/src/",
+    "dist/",
     "src/",
     "LICENSE",
     "README.md"
