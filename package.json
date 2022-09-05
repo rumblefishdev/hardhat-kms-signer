@@ -30,6 +30,7 @@
     "@rumblefishdev/eth-signer-kms": "^2.1.0",
     "@types/lodash": "^4.14.172",
     "asn1.js": "^5.4.1",
+    "bn.js": "^5.2.1",
     "ethers": "^5.6.9"
   },
   "devDependencies": {
