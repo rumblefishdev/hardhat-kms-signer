@@ -1,6 +1,6 @@
 {
   "name": "@rumblefishdev/hardhat-kms-signer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Sign Hardhat deployment transactions using KMS key",
   "repository": "github:rumblefishdev/hardhat-kms-signer",
   "author": "Rumblefish Software Development",
