@@ -1,7 +1,6 @@
-import BN from "bn.js";
 import {
   numberToRpcQuantity,
-  rpcQuantityToBN,
+  rpcQuantityToBigInt,
 } from "hardhat/internal/core/jsonrpc/types/base-types";
 import { ProviderWrapper } from "hardhat/internal/core/providers/wrapper";
 import { EIP1193Provider, RequestArguments } from "hardhat/types";
@@ -16,8 +15,8 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
 
   private _nodeHasFeeHistory?: boolean;
   private _nodeSupportsEIP1559?: boolean;
-  private _minMaxFeePerGas?: BN;
-  private _minMaxPriorityFeePerGas?: BN;
+  private _minMaxFeePerGas?: bigint;
+  private _minMaxPriorityFeePerGas?: bigint;
 
   constructor(
     provider: EIP1193Provider,
@@ -26,10 +25,10 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
   ) {
     super(provider);
     this._minMaxFeePerGas =
-      minMaxFeePerGas !== undefined ? new BN(minMaxFeePerGas) : undefined;
+      minMaxFeePerGas !== undefined ? BigInt(minMaxFeePerGas) : undefined;
     this._minMaxPriorityFeePerGas =
       minMaxPriorityFeePerGas !== undefined
-        ? new BN(minMaxPriorityFeePerGas)
+        ? BigInt(minMaxPriorityFeePerGas)
         : undefined;
   }
 
@@ -56,7 +55,7 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
         tx.maxFeePerGas !== undefined &&
         this._minMaxFeePerGas !== undefined
       ) {
-        const maxFeePerGasBN = rpcQuantityToBN(tx.maxFeePerGas);
+        const maxFeePerGasBN = rpcQuantityToBigInt(tx.maxFeePerGas);
         tx.maxFeePerGas = numberToRpcQuantity(
           this._validateMinMaxGas(maxFeePerGasBN, this._minMaxFeePerGas)
         );
@@ -66,7 +65,7 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
         tx.maxPriorityFeePerGas !== undefined &&
         this._minMaxPriorityFeePerGas !== undefined
       ) {
-        const maxPriorityFeePerGasBN = rpcQuantityToBN(tx.maxPriorityFeePerGas);
+        const maxPriorityFeePerGasBN = rpcQuantityToBigInt(tx.maxPriorityFeePerGas);
         tx.maxPriorityFeePerGas = numberToRpcQuantity(
           this._validateMinMaxGas(
             maxPriorityFeePerGasBN,
@@ -103,12 +102,12 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
 
     let maxFeePerGas =
       tx.maxFeePerGas !== undefined
-        ? rpcQuantityToBN(tx.maxFeePerGas)
+        ? rpcQuantityToBigInt(tx.maxFeePerGas)
         : suggestedEip1559Values.maxFeePerGas;
 
     let maxPriorityFeePerGas =
       tx.maxPriorityFeePerGas !== undefined
-        ? rpcQuantityToBN(tx.maxPriorityFeePerGas)
+        ? rpcQuantityToBigInt(tx.maxPriorityFeePerGas)
         : suggestedEip1559Values.maxPriorityFeePerGas;
 
     if (this._minMaxFeePerGas) {
@@ -125,8 +124,8 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
       );
     }
 
-    if (maxFeePerGas.lt(maxPriorityFeePerGas)) {
-      maxFeePerGas = maxFeePerGas.add(maxPriorityFeePerGas);
+    if (maxFeePerGas < maxPriorityFeePerGas) {
+      maxFeePerGas = maxFeePerGas + maxPriorityFeePerGas;
     }
 
     tx.maxFeePerGas = numberToRpcQuantity(maxFeePerGas);
@@ -135,23 +134,23 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
     return this._wrappedProvider.request(args);
   }
 
-  private _validateMinMaxGas = (initialMaxGas: BN, minMaxGas: BN) => {
-    return initialMaxGas.lt(minMaxGas) ? minMaxGas : initialMaxGas;
+  private _validateMinMaxGas = (initialMaxGas: bigint, minMaxGas: bigint) => {
+    return initialMaxGas < minMaxGas ? minMaxGas : initialMaxGas;
   };
 
-  private async _getGasPrice(): Promise<BN> {
+  private async _getGasPrice(): Promise<bigint> {
     const response = (await this._wrappedProvider.request({
       method: "eth_gasPrice",
     })) as string;
 
-    return rpcQuantityToBN(response);
+    return rpcQuantityToBigInt(response);
   }
 
   private async _suggestEip1559FeePriceValues(): Promise<
     | {
-        maxFeePerGas: BN;
-        maxPriorityFeePerGas: BN;
-      }
+      maxFeePerGas: bigint;
+      maxPriorityFeePerGas: bigint;
+    }
     | undefined
   > {
     if (this._nodeSupportsEIP1559 === undefined) {
@@ -183,26 +182,25 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
         // Each block increases the base fee by 1/8 at most, when full.
         // We have the next block's base fee, so we compute a cap for the
         // next N blocks here.
-        maxFeePerGas: rpcQuantityToBN(response.baseFeePerGas[1])
-          .mul(
-            new BN(9).pow(
-              new BN(
+        maxFeePerGas: rpcQuantityToBigInt(response.baseFeePerGas[1]) * (
+          BigInt(9) ** (
+            BigInt(
+              AutomaticGasPriceProvider.EIP1559_BASE_FEE_MAX_FULL_BLOCKS_PREFERENCE -
+              1
+            )
+          )
+        )
+          / (
+            BigInt(8) ** (
+              BigInt(
                 AutomaticGasPriceProvider.EIP1559_BASE_FEE_MAX_FULL_BLOCKS_PREFERENCE -
-                  1
+                1
               )
             )
           )
-          .div(
-            new BN(8).pow(
-              new BN(
-                AutomaticGasPriceProvider.EIP1559_BASE_FEE_MAX_FULL_BLOCKS_PREFERENCE -
-                  1
-              )
-            )
-          )
-          .add(new BN(rpcQuantityToBN(response.reward[0][0]))),
+          + (rpcQuantityToBigInt(response.reward[0][0])),
 
-        maxPriorityFeePerGas: rpcQuantityToBN(response.reward[0][0]),
+        maxPriorityFeePerGas: rpcQuantityToBigInt(response.reward[0][0]),
       };
     } catch (_error) {
       this._nodeHasFeeHistory = false;

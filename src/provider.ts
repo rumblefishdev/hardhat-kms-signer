@@ -30,16 +30,16 @@ export class KMSSigner extends ProviderWrapperWithChainId {
     if (method === "eth_sendTransaction") {
       const [txRequest] = validateParams(params, rpcTransactionRequest);
       const tx = await utils.resolveProperties(txRequest);
-      const nonce = tx.nonce?.toNumber() ?? (await this._getNonce(sender));
+      const nonce = tx.nonce ?? (await this._getNonce(sender));
       const baseTx: utils.UnsignedTransaction = {
         chainId: (await this._getChainId()) || undefined,
         data: tx.data,
-        gasLimit: toHexString(tx.gas),
-        gasPrice: toHexString(tx.gasPrice),
-        nonce,
+        gasLimit: tx.gas,
+        gasPrice: tx.gasPrice,
+        nonce: Number(nonce),
         type: 2,
         to: toHexString(tx.to),
-        value: toHexString(tx.value),
+        value: tx.value,
         maxFeePerGas: tx.maxFeePerGas?.toString(),
         maxPriorityFeePerGas: tx.maxPriorityFeePerGas?.toString(),
       };
