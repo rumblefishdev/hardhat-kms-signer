@@ -2,7 +2,7 @@ import {
   createSignature,
   getEthAddressFromKMS,
 } from "@rumblefishdev/eth-signer-kms";
-import { KMS } from "aws-sdk";
+import { KMSClient } from "@aws-sdk/client-kms";
 import { BigNumber, utils } from "ethers";
 import { keccak256 } from "ethers/lib/utils";
 import { rpcTransactionRequest } from "hardhat/internal/core/jsonrpc/types/input/transactionRequest";
@@ -14,13 +14,13 @@ import { toHexString } from "./utils";
 
 export class KMSSigner extends ProviderWrapperWithChainId {
   public kmsKeyId: string;
-  public kmsInstance: KMS;
+  public kmsInstance: KMSClient;
   public ethAddress?: string;
 
   constructor(provider: EIP1193Provider, kmsKeyId: string) {
     super(provider);
     this.kmsKeyId = kmsKeyId;
-    this.kmsInstance = new KMS();
+    this.kmsInstance = new KMSClient();
   }
 
   public async request(args: RequestArguments): Promise<unknown> {

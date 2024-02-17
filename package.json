@@ -27,18 +27,18 @@
     "README.md"
   ],
   "dependencies": {
-    "@rumblefishdev/eth-signer-kms": "^2.1.0",
+    "@rumblefishdev/eth-signer-kms": "^3.0.0",
     "@types/lodash": "^4.14.172",
     "asn1.js": "^5.4.1",
     "bn.js": "^5.2.1",
     "ethers": "^5.7.2"
   },
   "devDependencies": {
+    "@aws-sdk/client-kms": "^3.515.0",
     "@types/chai": "^4.1.7",
     "@types/fs-extra": "^5.0.4",
     "@types/mocha": "^5.2.6",
     "@types/node": "^16.18.0",
-    "aws-sdk": "*",
     "chai": "^4.2.0",
     "hardhat": "^2.12.3",
     "mocha": "^7.1.2",
