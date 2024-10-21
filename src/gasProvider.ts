@@ -65,7 +65,9 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
         tx.maxPriorityFeePerGas !== undefined &&
         this._minMaxPriorityFeePerGas !== undefined
       ) {
-        const maxPriorityFeePerGasBN = rpcQuantityToBigInt(tx.maxPriorityFeePerGas);
+        const maxPriorityFeePerGasBN = rpcQuantityToBigInt(
+          tx.maxPriorityFeePerGas
+        );
         tx.maxPriorityFeePerGas = numberToRpcQuantity(
           this._validateMinMaxGas(
             maxPriorityFeePerGasBN,
@@ -148,9 +150,9 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
 
   private async _suggestEip1559FeePriceValues(): Promise<
     | {
-      maxFeePerGas: bigint;
-      maxPriorityFeePerGas: bigint;
-    }
+        maxFeePerGas: bigint;
+        maxPriorityFeePerGas: bigint;
+      }
     | undefined
   > {
     if (this._nodeSupportsEIP1559 === undefined) {
@@ -182,23 +184,19 @@ export class AutomaticGasPriceProvider extends ProviderWrapper {
         // Each block increases the base fee by 1/8 at most, when full.
         // We have the next block's base fee, so we compute a cap for the
         // next N blocks here.
-        maxFeePerGas: rpcQuantityToBigInt(response.baseFeePerGas[1]) * (
-          BigInt(9) ** (
-            BigInt(
-              AutomaticGasPriceProvider.EIP1559_BASE_FEE_MAX_FULL_BLOCKS_PREFERENCE -
-              1
-            )
-          )
-        )
-          / (
-            BigInt(8) ** (
+        maxFeePerGas:
+          (rpcQuantityToBigInt(response.baseFeePerGas[1]) *
+            BigInt(9) **
               BigInt(
                 AutomaticGasPriceProvider.EIP1559_BASE_FEE_MAX_FULL_BLOCKS_PREFERENCE -
-                1
-              )
-            )
-          )
-          + (rpcQuantityToBigInt(response.reward[0][0])),
+                  1
+              )) /
+            BigInt(8) **
+              BigInt(
+                AutomaticGasPriceProvider.EIP1559_BASE_FEE_MAX_FULL_BLOCKS_PREFERENCE -
+                  1
+              ) +
+          rpcQuantityToBigInt(response.reward[0][0]),
 
         maxPriorityFeePerGas: rpcQuantityToBigInt(response.reward[0][0]),
       };
